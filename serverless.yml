@@ -1,0 +1,103 @@
+service: Alertur-Database
+
+
+provider:
+  name: aws
+  region: us-east-2
+  stage: DEV
+  runtime: nodejs10.x
+  role: arn:aws:iam::556332110707:role/LambdaBasicPrivileges
+  environment: ${self:custom.environments.${opt:stage, 'DEV'}}
+
+
+custom:
+  saasName: 'Alertur'
+  pathToHandler: "compiled/src"
+  pathToJSFile: "src"
+  accessKeyId: ${ssm:Alertur-accessKeyId~true}
+  secretAccessKey: ${ssm:Alertur-secretAccessKey~true}
+  region: ${ssm:Alertur-region~true}
+  environments:
+    DEV:
+      saasName: ${self:custom.saasName}
+      stage: 'DEV'
+      accessKeyId: ${self:custom.accessKeyId}
+      secretAccessKey: ${self:custom.secretAccessKey}
+      region: ${self:custom.region}
+    PROD:
+      saasName: ${self:custom.saasName}
+      stage: 'PROD'
+      accessKeyId: ${self:custom.accessKeyId}
+      secretAccessKey: ${self:custom.secretAccessKey}
+      region: ${self:custom.region}
+
+
+plugins:
+  - serverless-plugin-include-dependencies
+
+
+package:
+  individually: true
+  exclude:
+    - "*.*"
+    - "src/**"
+    - "compiled/**"
+    - "correctModuleNames.js"
+  include:
+    - "*.js"
+
+
+functions:
+
+  batch-read:
+    handler: ${self:custom.pathToHandler}/batch-read.handler
+    package:
+      include:
+      - "${self:custom.pathToJSFile}/batch-read.js"
+    events:
+      - http:
+          path: batch-read
+          method: post
+          cors: true
+    tags:
+      type: api
+
+
+  create:
+    handler: ${self:custom.pathToHandler}/create.handler
+    package:
+      include:
+      - "${self:custom.pathToJSFile}/create.js"
+    events:
+      - http:
+          path: create
+          method: post
+          cors: true
+
+
+  link:
+    handler: ${self:custom.pathToHandler}/link.handler
+    package:
+      include:
+      - "${self:custom.pathToJSFile}/link.js"
+    events:
+      - http:
+          path: link
+          method: post
+          cors: true
+    tags:
+      type: api
+
+
+  unlink:
+    handler: ${self:custom.pathToHandler}/unlink.handler
+    package:
+      include:
+      - "${self:custom.pathToJSFile}/unlink.js"
+    events:
+      - http:
+          path: unlink
+          method: post
+          cors: true
+    tags:
+      type: api

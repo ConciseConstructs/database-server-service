@@ -1,0 +1,6 @@
+[submodule "lib/classes/lambdahandler"]
+	path = lib/classes/lambdahandler
+	url = https://github.com/ConciseConstructs/lambdahandler.git
+[submodule "lib/classes/crud"]
+	path = lib/classes/crud
+	url = https://github.com/ConciseConstructs/crud.git
