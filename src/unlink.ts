@@ -49,11 +49,11 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
         private makeRemoveLinkSyntax() {
           return {
             TableName: `${ process.env.saasName }-${ process.env.stage }`,
-            Key: { table: `${ this.request.accountId }.${ this.request.table }`, id: this.request.id },
+            Key: { table: `${ this.request.accountId }.${ this.request.foreignTable }`, id: this.request.foreignId },
             UpdateExpression: `REMOVE links.#table.#id`,
             ExpressionAttributeNames: {
-              "#table": this.request.foreignTable,
-              "#id": this.request.foreignId
+              "#table": this.request.table,
+              "#id": this.request.id
             }
           }
         }
