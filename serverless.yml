@@ -103,6 +103,22 @@ functions:
       type: api
 
 
+  update-links:
+    memorySize: 1856 # optional, in MB, default is 1024
+    timeout: 900 # optional, in seconds, default is 6
+    handler: ${self:custom.pathToHandler}/update-links.handler
+    package:
+      include:
+      - "${self:custom.pathToJSFile}/update-links.js"
+    events:
+      - http:
+          path: update-links
+          method: post
+          cors: true
+    tags:
+      type: api
+
+
   scale-update:
     handler: ${self:custom.pathToHandler}/scale-update.handler
     package:
