@@ -76,6 +76,8 @@ functions:
 
 
   link:
+    memorySize: 1256 # optional, in MB, default is 1024
+    timeout: 60 # optional, in seconds, default is 6
     handler: ${self:custom.pathToHandler}/link.handler
     package:
       include:
