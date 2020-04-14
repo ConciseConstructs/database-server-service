@@ -4,17 +4,20 @@ import { Context, Callback } from 'aws-lambda'
 
 
   export interface IRequest {
-    accountId:string
-    table:string
-    id:string
-    foreignTable:string
-    foreignId:string
+      silo:string
+      table:string
+      id:string
+      foreignTable:string
+      foreignId:string
+      accountId:string
+      link:boolean
   }
 
 
 export function handler(incomingRequest:IRequest, context:Context, callback:Callback) {
 
   class HandlerObject extends LambdaHandler {
+
     protected request:IRequest
     protected response:IResponse
 
@@ -26,7 +29,7 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
 
 
         protected hookConstructorPre() {
-          this.requiredInputs = ['accountId', 'id', 'foreignTable', 'foreignId']
+          this.requiredInputs = ['silo', 'table', 'id', 'foreignTable', 'foreignId', 'accountId']
           this.needsToConnectToDatabase = true
         }
 
@@ -38,24 +41,35 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
 
 
     protected performActions() {
+      console.log('performActions')
       this.db.update(this.makeRemoveLinkSyntax()).promise()
-        .then(result => this.hasSucceeded(result))
-        .catch(error => this.hasFailed(error))
+        .then(result => {
+          console.log('success:', result)
+          this.hasSucceeded(result)
+        } 
+        )
+        .catch(error => {
+          console.log('failure:', error)
+          this.hasFailed(error)
+        } 
+        )
     }
 
 
 
 
         private makeRemoveLinkSyntax() {
-          return {
-            TableName: `${ process.env.saasName }-${ process.env.stage }`,
-            Key: { table: `${ this.request.accountId }.${ this.request.foreignTable }`, id: this.request.foreignId },
+          let syntax = {
+            TableName: `${ this.request.silo }`,
+            Key: { table: `${ this.request.accountId }.${ this.request.table }`, id: this.request.id },
             UpdateExpression: `REMOVE links.#table.#id`,
             ExpressionAttributeNames: {
-              "#table": this.request.table,
-              "#id": this.request.id
+              "#table": this.request.foreignTable,
+              "#id": this.request.foreignId
             }
           }
+          console.log('syntax:', syntax)
+          return syntax
         }
 
 

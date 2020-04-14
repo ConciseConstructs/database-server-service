@@ -1,4 +1,4 @@
-service: Alertur-Database
+service: Database
 
 
 provider:
@@ -11,12 +11,12 @@ provider:
 
 
 custom:
-  saasName: 'Alertur'
+  saasName: 'Database'
   pathToHandler: "compiled/src"
   pathToJSFile: "src"
-  accessKeyId: ${ssm:Alertur-accessKeyId~true}
-  secretAccessKey: ${ssm:Alertur-secretAccessKey~true}
-  region: ${ssm:Alertur-region~true}
+  accessKeyId: ${ssm:concise-accessKeyId~true}
+  secretAccessKey: ${ssm:concise-secretAccessKey~true}
+  region: ${ssm:concise-region~true}
   environments:
     DEV:
       saasName: ${self:custom.saasName}
@@ -75,13 +75,13 @@ functions:
           cors: true
 
 
-  link:
+  links-link:
     memorySize: 1256 # optional, in MB, default is 1024
     timeout: 60 # optional, in seconds, default is 6
-    handler: ${self:custom.pathToHandler}/link.handler
+    handler: ${self:custom.pathToHandler}/links-link.handler
     package:
       include:
-      - "${self:custom.pathToJSFile}/link.js"
+      - "${self:custom.pathToJSFile}/links-link.js"
     events:
       - http:
           path: link
@@ -91,11 +91,11 @@ functions:
       type: api
 
 
-  unlink:
-    handler: ${self:custom.pathToHandler}/unlink.handler
+  links-unlink:
+    handler: ${self:custom.pathToHandler}/links-unlink.handler
     package:
       include:
-      - "${self:custom.pathToJSFile}/unlink.js"
+      - "${self:custom.pathToJSFile}/links-unlink.js"
     events:
       - http:
           path: unlink
@@ -105,16 +105,16 @@ functions:
       type: api
 
 
-  update-links:
+  links-queue:
     memorySize: 1856 # optional, in MB, default is 1024
     timeout: 900 # optional, in seconds, default is 6
-    handler: ${self:custom.pathToHandler}/update-links.handler
+    handler: ${self:custom.pathToHandler}/links-queue.handler
     package:
       include:
-      - "${self:custom.pathToJSFile}/update-links.js"
+      - "${self:custom.pathToJSFile}/links-queue.js"
     events:
       - http:
-          path: update-links
+          path: queue
           method: post
           cors: true
     tags:

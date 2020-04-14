@@ -4,17 +4,20 @@ import { Context, Callback } from 'aws-lambda'
 
 
   export interface IRequest {
-    accountId:string
+    silo:string
     table:string
     id:string
     foreignTable:string
     foreignId:string
+    accountId:string
+    link:boolean
   }
 
 
 export function handler(incomingRequest:IRequest, context:Context, callback:Callback) {
 
   class HandlerObject extends LambdaHandler {
+
     protected request:IRequest
     protected response:IResponse
 
@@ -26,7 +29,7 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
 
 
         protected hookConstructorPre() {
-          this.requiredInputs = ['accountId', 'id', 'foreignTable', 'foreignId']
+          this.requiredInputs = ['silo', 'table', 'id', 'foreignTable', 'foreignId', 'accountId']
           this.needsToConnectToDatabase = true
         }
 
@@ -39,16 +42,22 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
 
     protected performActions() {
       this.db.update(this.makeAddForeignLinkSyntax()).promise()
-        .then(result => this.hasSucceeded(result))
-        .catch(error => this.hasFailed(error))
+        .then(result => {
+          console.log('success:', result)
+          this.hasSucceeded(result)
+        })
+        .catch(error => {
+          console.log('error:', error)
+          this.hasFailed(error)
+        })
     }
 
 
 
 
         private makeAddForeignLinkSyntax() {
-          return {
-            TableName: `${ process.env.saasName }-${ process.env.stage }`,
+          let syntax = {
+            TableName: `${ this.request.silo }`,
             Key: { table: `${ this.request.accountId }.${ this.request.table }`, id: this.request.id },
             UpdateExpression: `SET links.#table.#id = :value`,
             ExpressionAttributeNames: {
@@ -57,6 +66,8 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
             },
             ExpressionAttributeValues: { ":value": null }
           }
+          console.log('syntax:', syntax)
+          return syntax
         }
 
 
