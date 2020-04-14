@@ -2,29 +2,25 @@ import { LambdaHandler } from '../lib/classes/lambdahandler/LambdaHandler.class'
 import { IResponse } from '../lib/classes/lambdahandler/Response.class'
 import { Context, Callback } from 'aws-lambda'
 import { DynamoDB } from 'aws-sdk'
+import { IScaleRequest } from '../lib/interfaces/database-server-service-interface/scale.interface'
 
 
-  export interface IRequest {
-    units:number
-  }
-
-
-export function handler(incomingRequest:IRequest, context:Context, callback:Callback) {
+export function handler(incomingRequest:IScaleRequest, context:Context, callback:Callback) {
 
   class HandlerObject extends LambdaHandler {
-    protected request:IRequest
+    protected request:IScaleRequest
     protected response:IResponse
     currentCapacity: any
 
 
-    constructor(incomingRequest:IRequest, context:Context, callback:Callback) {
+    constructor(incomingRequest:IScaleRequest, context:Context, callback:Callback) {
       super(incomingRequest, context, callback)
     }
 
 
 
         protected hookConstructorPre() {
-          this.requiredInputs = ['units']
+          this.requiredInputs = ['saasName', 'units']
           this.needsToConnectToDatabase = true
         }
 
@@ -37,7 +33,7 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
 
     protected async performActions() {
       const db = new DynamoDB()
-      let result = await db.describeTable({ TableName: `${ process.env.saasName }-${ process.env.stage }` }).promise() as any
+      let result = await db.describeTable({ TableName: `${ this.request.saasName }-${ process.env.stage }` }).promise() as any
       if (result && result.Table) this.currentCapacity = result.Table.ProvisionedThroughput.WriteCapacityUnits
       db.updateTable(this.makeUpdateCapacitySyntax()).promise()
         .then(result => this.onUpdateCapacitySuccess(result))
@@ -49,7 +45,7 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
 
       private makeUpdateCapacitySyntax() {
         return {
-          TableName: `${ process.env.saasName }-${ process.env.stage }`,
+          TableName: `${ this.request.saasName }-${ process.env.stage }`,
           ProvisionedThroughput: {
            ReadCapacityUnits: this.currentCapacity + this.request.units,
            WriteCapacityUnits: this.currentCapacity + this.request.units

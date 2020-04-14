@@ -1,30 +1,24 @@
 import { LambdaHandler } from '../lib/classes/lambdahandler/LambdaHandler.class'
 import { IResponse } from '../lib/classes/lambdahandler/Response.class'
 import { Context, Callback } from 'aws-lambda'
+import { IBatchReadRequest } from '../lib/interfaces/database-server-service-interface/batch-read.interface'
 
 
-  export interface IRequest {
-    accountId:string
-    tableName:string
-    ids:string[]
-  }
-
-
-export function handler(incomingRequest:IRequest, context:Context, callback:Callback) {
+export function handler(incomingRequest:IBatchReadRequest, context:Context, callback:Callback) {
 
   class HandlerObject extends LambdaHandler {
-    protected request:IRequest
+    protected request:IBatchReadRequest
     protected response:IResponse
 
 
-    constructor(incomingRequest:IRequest, context:Context, callback:Callback) {
+    constructor(incomingRequest:IBatchReadRequest, context:Context, callback:Callback) {
       super(incomingRequest, context, callback)
     }
 
 
 
         protected hookConstructorPre() {
-          this.requiredInputs = ['accountId', 'tableName', 'ids']
+          this.requiredInputs = ['saasName','accountId','records']
           this.needsToConnectToDatabase = true
         }
 
@@ -48,8 +42,7 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
 
 
             private makeBatchGetSyntax() {
-              let siloName = `${ process.env.saasName }-${ process.env.stage }`
-              let tableName = `${ this.request.accountId }.${ this.request.tableName }`
+              let siloName = `${ this.request.saasName }-${ process.env.stage }`
               let syntax = {
                 RequestItems: {
                   [`${ siloName }`]: {
@@ -57,7 +50,7 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
                   }
                 }
               }
-              this.request.ids.forEach(id => syntax.RequestItems[siloName].Keys.push({ table: tableName, id: id }))
+              this.request.records.forEach(record => syntax.RequestItems[siloName].Keys.push({ table: record.tableName, id: record.id }))
               return syntax
             }
 

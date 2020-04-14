@@ -1,28 +1,18 @@
 import { LambdaHandler } from '../lib/classes/lambdahandler/LambdaHandler.class'
 import { IResponse } from '../lib/classes/lambdahandler/Response.class'
 import { Context, Callback } from 'aws-lambda'
+import { ILinkRequest } from '../lib/interfaces/database-server-service-interface/links-link.interface'
 
 
-  export interface IRequest {
-    silo:string
-    table:string
-    id:string
-    foreignTable:string
-    foreignId:string
-    accountId:string
-    link:boolean
-  }
-
-
-export function handler(incomingRequest:IRequest, context:Context, callback:Callback) {
+export function handler(incomingRequest:ILinkRequest, context:Context, callback:Callback) {
 
   class HandlerObject extends LambdaHandler {
 
-    protected request:IRequest
+    protected request:ILinkRequest
     protected response:IResponse
 
 
-    constructor(incomingRequest:IRequest, context:Context, callback:Callback) {
+    constructor(incomingRequest:ILinkRequest, context:Context, callback:Callback) {
       super(incomingRequest, context, callback)
     }
 

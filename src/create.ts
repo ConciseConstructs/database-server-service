@@ -2,40 +2,26 @@ import { LambdaHandler } from '../lib/classes/lambdahandler/LambdaHandler.class'
 import { IResponse } from '../lib/classes/lambdahandler/Response.class'
 import { Context, Callback } from 'aws-lambda'
 import { DynamoDB } from 'aws-sdk'
+import { ICreateRequest } from '../lib/interfaces/database-server-service-interface/create.interface'
 
 
-  export interface IRequest {
-    newAccountData: {
-      acctId:string
-      name:string
-      firstName:string
-      lastName:string
-      address:string
-      address2:string
-      city:string
-      state:string
-      postalCode:string
-      email:string
-    }
-    initialUser:any
-  }
 
-
-export function handler(incomingRequest:IRequest, context:Context, callback:Callback) {
+export function handler(incomingRequest:ICreateRequest, context:Context, callback:Callback) {
 
   class HandlerObject extends LambdaHandler {
-    protected request:IRequest
+    protected request:ICreateRequest
     protected response:IResponse
+    private siloName:string
 
 
-    constructor(incomingRequest:IRequest, context:Context, callback:Callback) {
+    constructor(incomingRequest:ICreateRequest, context:Context, callback:Callback) {
       super(incomingRequest, context, callback)
     }
 
 
 
         protected hookConstructorPre() {
-          this.requiredInputs = ['newAccountData', 'initialUser']
+          this.requiredInputs = ['saasName','records']
           this.needsToConnectToDatabase = true
         }
 
@@ -46,6 +32,7 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
 
 
     protected performActions() {
+      this.siloName = `${ this.request.saasName }-${ process.env.stage }`
       this.createUserDatabase()
     }
 
@@ -63,80 +50,9 @@ export function handler(incomingRequest:IRequest, context:Context, callback:Call
 
 
             private makeCreateUserDatabaseSyntax():DynamoDB.BatchWriteItemInput {
-              return {
-                RequestItems: {
-                  [`${ process.env.saasName }-${ process.env.stage }`]: [
-                    {
-                      PutRequest: {
-                        Item: {
-                          table: `${ this.request.newAccountData.acctId }.balances`,
-                          id: "current",
-                          amount: 0.00,
-                          indexA: `updatedAt:${ new Date().valueOf() }`,
-                        }
-                      }
-                    },
-                    {
-                      PutRequest: {
-                        Item: {
-                          table: `${ this.request.newAccountData.acctId }.conversations`,
-                          id: "log",
-                        }
-                      }
-                    },
-                    {
-                      PutRequest: {
-                        Item: {
-                          table: `${ this.request.newAccountData.acctId }.keywords`,
-                          id: "log",
-                        }
-                      }
-                    },
-                    {
-                      PutRequest: {
-                        Item: {
-                          table: `${ this.request.newAccountData.acctId }.opts`,
-                          id: "log",
-                        }
-                      }
-                    },
-                    {
-                      PutRequest: {
-                        Item: {
-                          table: `${ this.request.newAccountData.acctId }.opts`,
-                          id: "phones",
-                        }
-                      }
-                    },
-                    {
-                      PutRequest: {
-                        Item: this.request.initialUser
-                      }
-                    },
-                    {
-                      PutRequest: {
-                        Item: {
-                          table: `${ this.request.newAccountData.acctId }.metas`,
-                          id: "entity",
-                          name: this.request.newAccountData.name,
-                          contact: `${ this.request.newAccountData.firstName } ${ this.request.newAccountData.lastName }`,
-                          address: this.request.newAccountData.address,
-                          address2: this.request.newAccountData.address2,
-                          city: this.request.newAccountData.city,
-                          state: this.request.newAccountData.state,
-                          postalCode: this.request.newAccountData.postalCode,
-                          contactEmail: this.request.newAccountData.email,
-                          braintreeId: null,
-                          twilio: {
-                            auth: null,
-                            sid: null
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              } as DynamoDB.BatchWriteItemInput
+              let batchRequest = { RequestItems: { [this.siloName]: [] } } as DynamoDB.BatchWriteItemInput
+              this.request.records.forEach(record => batchRequest.RequestItems[this.siloName].push({ PutRequest: { Item: record } },))
+              return batchRequest
             }
 
   } // End Handler Class ---------
