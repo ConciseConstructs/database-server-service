@@ -11,7 +11,8 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.14",
     "@types/node": "^11.11.3",
-    "serverless-plugin-include-dependencies": "^3.2.1"
+    "serverless-plugin-include-dependencies": "^3.2.1",
+    "serverless-tag-api-gateway": "^1.0.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
